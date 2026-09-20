@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orchard.grove.mapper.HarvestBatchTreeMapper">
+    <resultMap id="TreeMap" type="Tree">
+        <id column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="variety" property="variety"/>
+        <result column="plant_year" property="plantYear"/>
+        <result column="status" property="status"/>
+        <result column="note" property="note"/>
+    </resultMap>
+
+    <select id="findTreesByBatch" resultMap="TreeMap">
+        SELECT t.* FROM tree t
+        JOIN harvest_batch_tree btt ON btt.tree_id = t.id
+        WHERE btt.batch_id = #{batchId}
+        ORDER BY t.code
+    </select>
+
+    <select id="findOpenBatchIdsByTree" resultType="long">
+        SELECT btt.batch_id FROM harvest_batch_tree btt
+        JOIN harvest_batch b ON b.id = btt.batch_id
+        WHERE btt.tree_id = #{treeId} AND b.status IN ('待采', '采集中')
+    </select>
+
+    <delete id="deleteByBatch">
+        DELETE FROM harvest_batch_tree WHERE batch_id = #{batchId}
+    </delete>
+
+    <insert id="insertBatchTree">
+        INSERT INTO harvest_batch_tree (batch_id, tree_id) VALUES (#{batchId}, #{treeId})
+    </insert>
+</mapper>

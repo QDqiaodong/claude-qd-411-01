@@ -18,6 +18,13 @@
     <select id="findById" resultMap="TreeMap">
         SELECT * FROM tree WHERE id = #{id}
     </select>
+    <select id="findByIdForUpdate" resultMap="TreeMap">
+        SELECT * FROM tree WHERE id = #{id} FOR UPDATE
+    </select>
+    <select id="findByIds" resultMap="TreeMap">
+        SELECT * FROM tree WHERE id IN
+        <foreach collection="ids" item="tid" open="(" separator="," close=")">#{tid}</foreach>
+    </select>
     <select id="findByCode" resultMap="TreeMap">
         SELECT * FROM tree WHERE code = #{code}
     </select>
@@ -28,6 +35,9 @@
         INSERT INTO tree (code, plot_id, variety, plant_year, status, note)
         VALUES (#{code}, #{plotId}, #{variety}, #{plantYear}, #{status}, #{note})
     </insert>
+    <update id="updateStatus">
+        UPDATE tree SET status = #{status} WHERE id = #{id}
+    </update>
     <update id="update">
         UPDATE tree
         SET code = #{code}, plot_id = #{plotId}, variety = #{variety},

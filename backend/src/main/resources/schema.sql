@@ -17,6 +17,28 @@ CREATE TABLE IF NOT EXISTS tree (
     note VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS clear_record (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    tree_id BIGINT NOT NULL,
+    plot_id BIGINT NOT NULL,
+    prev_status VARCHAR(16) NOT NULL,
+    reason VARCHAR(255),
+    status VARCHAR(16) NOT NULL DEFAULT '生效',
+    created_at VARCHAR(32) NOT NULL,
+    withdrawn_at VARCHAR(32),
+    -- 生效单（withdrawn_at 为空）取值 tree_id，撤回单取 -id；
+    -- MySQL 唯一索引允许多个 NULL，不能直接对 NULL 列做唯一约束，用生成列兜住并发
+    active_tree_id BIGINT GENERATED ALWAYS AS
+        (CASE WHEN withdrawn_at IS NULL THEN tree_id ELSE -id END) VIRTUAL,
+    UNIQUE KEY uq_clear_active_tree (active_tree_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS harvest_batch_tree (
+    batch_id BIGINT NOT NULL,
+    tree_id BIGINT NOT NULL,
+    PRIMARY KEY (batch_id, tree_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS harvest_batch (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     plot_id BIGINT NOT NULL,
@@ -67,3 +89,8 @@ INSERT IGNORE INTO inventory (id, variety, stock_kg, warn_line, updated_at) VALU
 INSERT IGNORE INTO spray_record (id, plot_id, pesticide, spray_date, interval_days, status, note) VALUES
  (1, 1, '氯氰菊酯', '2026-09-18', 7, '有效', '蚜虫露头，补喷一次'),
  (2, 2, '波尔多液', '2026-09-01', 10, '有效', '预防性喷施');
+
+-- 批次挂树：已入仓的批次1 挂 T0001；采集中的批次2 挂 T0003（清 T0003 应被挡住）
+INSERT IGNORE INTO harvest_batch_tree (batch_id, tree_id) VALUES
+ (1, 1),
+ (2, 3);

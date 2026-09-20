@@ -9,19 +9,25 @@
         <result column="area" property="area"/>
         <result column="status" property="status"/>
         <result column="note" property="note"/>
+        <result column="active_tree_count" property="activeTreeCount"/>
     </resultMap>
 
+    <sql id="cols">
+        p.id, p.code, p.name, p.area, p.status, p.note,
+        (SELECT COUNT(*) FROM tree t WHERE t.plot_id = p.id AND t.status &lt;&gt; '已清') AS active_tree_count
+    </sql>
+
     <select id="findAll" resultMap="PlotMap">
-        SELECT * FROM plot ORDER BY id
+        SELECT <include refid="cols"/> FROM plot p ORDER BY p.id
     </select>
     <select id="findById" resultMap="PlotMap">
-        SELECT * FROM plot WHERE id = #{id}
+        SELECT <include refid="cols"/> FROM plot p WHERE p.id = #{id}
     </select>
     <select id="findByCode" resultMap="PlotMap">
-        SELECT * FROM plot WHERE code = #{code}
+        SELECT <include refid="cols"/> FROM plot p WHERE p.code = #{code}
     </select>
     <select id="countTrees" resultType="int">
-        SELECT COUNT(*) FROM tree WHERE plot_id = #{plotId}
+        SELECT COUNT(*) FROM tree WHERE plot_id = #{plotId} AND status &lt;&gt; '已清'
     </select>
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO plot (code, name, area, status, note)

@@ -35,6 +35,8 @@ public class TreeService {
         t.variety = f.variety;
         t.plantYear = f.plantYear;
         t.status = (f.status == null || f.status.isBlank()) ? "正常" : f.status;
+        if ("已清".equals(t.status))
+            throw new BizException("「已清」只能通过开具清树单产生，不能手工设置");
         t.note = f.note;
         treeMapper.insert(t);
         return t;
@@ -52,7 +54,13 @@ public class TreeService {
         }
         if (f.variety != null && !f.variety.isBlank()) t.variety = f.variety;
         if (f.plantYear != null) t.plantYear = f.plantYear;
-        if (f.status != null && !f.status.isBlank()) t.status = f.status;
+        if (f.status != null && !f.status.isBlank()) {
+            if ("已清".equals(f.status) && !"已清".equals(t.status))
+                throw new BizException("「已清」只能通过开具清树单产生，不能手工设置");
+            if (!"已清".equals(f.status) && "已清".equals(t.status))
+                throw new BizException("该树已有生效中的清树单，需先撤回清树单才能恢复，不能手工改状态");
+            t.status = f.status;
+        }
         if (f.note != null) t.note = f.note;
         treeMapper.update(t);
         return t;
