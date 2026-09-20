@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orchard.grove.mapper.HarvestBatchMapper">
+    <resultMap id="BatchMap" type="HarvestBatch">
+        <id column="id" property="id"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="batch_date" property="batchDate"/>
+        <result column="status" property="status"/>
+        <result column="estimate_kg" property="estimateKg"/>
+        <result column="actual_kg" property="actualKg"/>
+        <result column="variety" property="variety"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BatchMap">
+        SELECT * FROM harvest_batch ORDER BY id
+    </select>
+    <select id="findById" resultMap="BatchMap">
+        SELECT * FROM harvest_batch WHERE id = #{id}
+    </select>
+    <select id="findByPlotAndDate" resultMap="BatchMap">
+        SELECT * FROM harvest_batch WHERE plot_id = #{plotId} AND batch_date = #{batchDate}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO harvest_batch (plot_id, batch_date, status, estimate_kg, actual_kg, variety)
+        VALUES (#{plotId}, #{batchDate}, #{status}, #{estimateKg}, #{actualKg}, #{variety})
+    </insert>
+    <update id="update">
+        UPDATE harvest_batch
+        SET plot_id = #{plotId}, batch_date = #{batchDate}, status = #{status},
+            estimate_kg = #{estimateKg}, actual_kg = #{actualKg}, variety = #{variety}
+        WHERE id = #{id}
+    </update>
+</mapper>
