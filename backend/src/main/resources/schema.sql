@@ -25,12 +25,7 @@ CREATE TABLE IF NOT EXISTS clear_record (
     reason VARCHAR(255),
     status VARCHAR(16) NOT NULL DEFAULT '生效',
     created_at VARCHAR(32) NOT NULL,
-    withdrawn_at VARCHAR(32),
-    -- 生效单（withdrawn_at 为空）取值 tree_id，撤回单取 -id；
-    -- MySQL 唯一索引允许多个 NULL，不能直接对 NULL 列做唯一约束，用生成列兜住并发
-    active_tree_id BIGINT GENERATED ALWAYS AS
-        (CASE WHEN withdrawn_at IS NULL THEN tree_id ELSE -id END) VIRTUAL,
-    UNIQUE KEY uq_clear_active_tree (active_tree_id)
+    withdrawn_at VARCHAR(32)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS harvest_batch_tree (
