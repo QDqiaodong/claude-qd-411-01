@@ -3,13 +3,17 @@ package com.orchard.grove.service;
 import com.orchard.grove.dto.BizException;
 import com.orchard.grove.mapper.HarvestBatchMapper;
 import com.orchard.grove.mapper.PlotMapper;
+import com.orchard.grove.mapper.TreeMapper;
 import com.orchard.grove.model.HarvestBatch;
 import com.orchard.grove.model.Plot;
 import com.orchard.grove.model.SprayRecord;
+import com.orchard.grove.model.Tree;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class HarvestBatchService {
@@ -18,6 +22,8 @@ public class HarvestBatchService {
     @Autowired
     PlotMapper plotMapper;
     @Autowired
+    TreeMapper treeMapper;
+    @Autowired
     InventoryService inventoryService;
     @Autowired
     SprayService sprayService;
@@ -25,6 +31,7 @@ public class HarvestBatchService {
     public List<HarvestBatch> list() {
         List<HarvestBatch> all = batchMapper.findAll();
         for (HarvestBatch b : all) {
+            b.treeIds = batchMapper.findTreeIds(b.id);
             b.blocked = false;
             if (!"已入仓".equals(b.status)) {
                 SprayRecord s = sprayService.blockingSpray(b.plotId, b.batchDate);
@@ -37,6 +44,7 @@ public class HarvestBatchService {
         return all;
     }
 
+    @Transactional
     public HarvestBatch create(HarvestBatch f) {
         if (f.plotId == null) throw new BizException("必须指定地块");
         Plot plot = plotMapper.findById(f.plotId);
@@ -50,6 +58,7 @@ public class HarvestBatchService {
             throw new BizException("该地块 " + f.batchDate + " 已有一批采摘");
         if (f.variety == null || f.variety.isBlank()) throw new BizException("品种必填");
         if (f.estimateKg == null || f.estimateKg <= 0) throw new BizException("预估产量必须大于 0");
+        List<Long> treeIds = checkTrees(f.plotId, f.treeIds);
         HarvestBatch b = new HarvestBatch();
         b.plotId = f.plotId;
         b.batchDate = f.batchDate;
@@ -58,9 +67,12 @@ public class HarvestBatchService {
         b.status = "待采";
         b.actualKg = null;
         batchMapper.insert(b);
+        saveTrees(b.id, treeIds);
+        b.treeIds = batchMapper.findTreeIds(b.id);
         return b;
     }
 
+    @Transactional
     public HarvestBatch update(Long id, HarvestBatch f) {
         HarvestBatch b = batchMapper.findById(id);
         if (b == null) throw new BizException("采摘批次不存在");
@@ -83,10 +95,38 @@ public class HarvestBatchService {
             }
             b.status = next;
         }
+        if (f.treeIds != null) {
+            // 已入仓批次的果树名单是历史事实，冻结；未入仓批次可摘掉/调换果树
+            if ("已入仓".equals(b.status)) throw new BizException("已入仓批次的果树名单不能再改");
+            List<Long> treeIds = checkTrees(b.plotId, f.treeIds);
+            batchMapper.deleteBatchTrees(b.id);
+            saveTrees(b.id, treeIds);
+        }
         if (f.estimateKg != null) b.estimateKg = f.estimateKg;
         if (f.variety != null && !f.variety.isBlank()) b.variety = f.variety;
         if (f.actualKg != null && !"已入仓".equals(b.status)) b.actualKg = f.actualKg;
         batchMapper.update(b);
+        b.treeIds = batchMapper.findTreeIds(b.id);
         return b;
+    }
+
+    /**
+     * 选入批次的树必须存在、属于本地块、且未清（已清的树不能再进新批次）。
+     * 行锁读取（按 id 升序，防死锁）：与清树互斥，校验过的树在本事务提交前不会被清掉。
+     */
+    private List<Long> checkTrees(Long plotId, List<Long> treeIds) {
+        if (treeIds == null) return List.of();
+        List<Long> uniq = treeIds.stream().filter(Objects::nonNull).distinct().sorted().toList();
+        for (Long tid : uniq) {
+            Tree t = treeMapper.findByIdForUpdate(tid);
+            if (t == null) throw new BizException("果树 #" + tid + " 不存在");
+            if (!plotId.equals(t.plotId)) throw new BizException("果树 " + t.code + " 不属于本地块，不能选入该批次");
+            if ("已清".equals(t.status)) throw new BizException("果树 " + t.code + " 已清，不能选入批次");
+        }
+        return uniq;
+    }
+
+    private void saveTrees(Long batchId, List<Long> treeIds) {
+        for (Long tid : treeIds) batchMapper.insertBatchTree(batchId, tid);
     }
 }

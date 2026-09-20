@@ -31,4 +31,19 @@
             estimate_kg = #{estimateKg}, actual_kg = #{actualKg}, variety = #{variety}
         WHERE id = #{id}
     </update>
+    <select id="findUnstoredByTree" resultMap="BatchMap">
+        SELECT b.* FROM harvest_batch b
+        JOIN batch_tree bt ON bt.batch_id = b.id
+        WHERE bt.tree_id = #{treeId} AND b.status IN ('待采', '采集中')
+        ORDER BY b.id
+    </select>
+    <select id="findTreeIds" resultType="long">
+        SELECT tree_id FROM batch_tree WHERE batch_id = #{batchId} ORDER BY tree_id
+    </select>
+    <insert id="insertBatchTree">
+        INSERT INTO batch_tree (batch_id, tree_id) VALUES (#{batchId}, #{treeId})
+    </insert>
+    <delete id="deleteBatchTrees">
+        DELETE FROM batch_tree WHERE batch_id = #{batchId}
+    </delete>
 </mapper>

@@ -21,7 +21,7 @@
         SELECT * FROM plot WHERE code = #{code}
     </select>
     <select id="countTrees" resultType="int">
-        SELECT COUNT(*) FROM tree WHERE plot_id = #{plotId}
+        SELECT COUNT(*) FROM tree WHERE plot_id = #{plotId} AND status &lt;&gt; '已清'
     </select>
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO plot (code, name, area, status, note)

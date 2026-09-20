@@ -18,6 +18,9 @@
     <select id="findById" resultMap="TreeMap">
         SELECT * FROM tree WHERE id = #{id}
     </select>
+    <select id="findByIdForUpdate" resultMap="TreeMap">
+        SELECT * FROM tree WHERE id = #{id} FOR UPDATE
+    </select>
     <select id="findByCode" resultMap="TreeMap">
         SELECT * FROM tree WHERE code = #{code}
     </select>
@@ -33,5 +36,11 @@
         SET code = #{code}, plot_id = #{plotId}, variety = #{variety},
             plant_year = #{plantYear}, status = #{status}, note = #{note}
         WHERE id = #{id}
+    </update>
+    <update id="clearIfNotCleared">
+        UPDATE tree SET status = '已清' WHERE id = #{id} AND status &lt;&gt; '已清'
+    </update>
+    <update id="restoreIfCleared">
+        UPDATE tree SET status = #{status} WHERE id = #{id} AND status = '已清'
     </update>
 </mapper>

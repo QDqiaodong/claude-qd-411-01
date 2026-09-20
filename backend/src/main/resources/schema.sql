@@ -35,6 +35,22 @@ CREATE TABLE IF NOT EXISTS inventory (
     updated_at VARCHAR(32)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS tree_removal (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    tree_id BIGINT NOT NULL,
+    reason VARCHAR(255),
+    prev_status VARCHAR(16),
+    status VARCHAR(16) NOT NULL DEFAULT '有效',
+    created_at VARCHAR(32),
+    withdrawn_at VARCHAR(32)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS batch_tree (
+    batch_id BIGINT NOT NULL,
+    tree_id BIGINT NOT NULL,
+    PRIMARY KEY (batch_id, tree_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS spray_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     plot_id BIGINT NOT NULL,
@@ -59,6 +75,10 @@ INSERT IGNORE INTO tree (id, code, plot_id, variety, plant_year, status, note) V
 INSERT IGNORE INTO harvest_batch (id, plot_id, batch_date, status, estimate_kg, actual_kg, variety) VALUES
  (1, 1, '2026-09-10', '已入仓', 300.0, 280.0, '红富士'),
  (2, 2, '2026-09-12', '采集中', 200.0, NULL, '雪梨');
+
+INSERT IGNORE INTO batch_tree (batch_id, tree_id) VALUES
+ (1, 1), (1, 4),
+ (2, 3);
 
 INSERT IGNORE INTO inventory (id, variety, stock_kg, warn_line, updated_at) VALUES
  (1, '红富士', 280.0, 100.0, '2026-09-10 18:00:00'),

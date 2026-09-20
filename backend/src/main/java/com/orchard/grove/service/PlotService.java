@@ -14,7 +14,9 @@ public class PlotService {
     PlotMapper plotMapper;
 
     public List<Plot> list() {
-        return plotMapper.findAll();
+        List<Plot> all = plotMapper.findAll();
+        for (Plot p : all) p.productiveTrees = plotMapper.countTrees(p.id);
+        return all;
     }
 
     public Plot create(Plot f) {

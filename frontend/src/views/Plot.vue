@@ -10,6 +10,7 @@
         <div class="info">
           <div class="code">{{ p.code }} · {{ p.name }}</div>
           <el-tag :type="p.status === '在用' ? 'success' : 'info'" size="small">{{ p.status }}</el-tag>
+          <span class="trees-count">在产 {{ p.productiveTrees ?? 0 }} 株</span>
           <div class="note">{{ p.note || '—' }}</div>
           <el-button link type="primary" @click="openEdit(p)">编辑</el-button>
         </div>
@@ -68,5 +69,6 @@ onMounted(load)
 .ring { width: 76px; height: 76px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #2e7d32; flex-shrink: 0; }
 .ring span { background: #fff; width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .code { font-weight: 600; margin-bottom: 6px; }
+.trees-count { margin-left: 8px; font-size: 13px; color: #2e7d32; font-weight: 600; }
 .note { color: #8a9a8e; font-size: 13px; margin: 6px 0; }
 </style>
